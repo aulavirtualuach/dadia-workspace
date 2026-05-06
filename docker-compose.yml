@@ -1,0 +1,112 @@
+services:
+  lab:
+    build: .
+    container_name: dadia-lab
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./:/work
+    working_dir: /work
+    environment:
+      POSTGRES_URL: postgresql+psycopg2://dadia:dadia@postgres:5432/dadia
+      MYSQL_URL: mysql+pymysql://dadia:dadia@mysql:3306/dadia
+      MONGO_URL: mongodb://mongo:27017
+      REDIS_URL: redis://redis:6379/0
+    command: >
+      jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+      --NotebookApp.token=
+
+  api:
+    build: .
+    container_name: dadia-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/work
+    working_dir: /work
+    environment:
+      POSTGRES_URL: postgresql+psycopg2://dadia:dadia@postgres:5432/dadia
+      MYSQL_URL: mysql+pymysql://dadia:dadia@mysql:3306/dadia
+      MONGO_URL: mongodb://mongo:27017
+      REDIS_URL: redis://redis:6379/0
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  postgres:
+    image: postgres:16
+    container_name: dadia-postgres
+    environment:
+      POSTGRES_DB: dadia
+      POSTGRES_USER: dadia
+      POSTGRES_PASSWORD: dadia
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/postgres_init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  mysql:
+    image: mysql:8.4
+    container_name: dadia-mysql
+    environment:
+      MYSQL_DATABASE: dadia
+      MYSQL_USER: dadia
+      MYSQL_PASSWORD: dadia
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./sql/mysql_init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  mongo:
+    image: mongo:7
+    container_name: dadia-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
+  redis:
+    image: redis:7
+    container_name: dadia-redis
+    ports:
+      - "6379:6379"
+
+  grafana:
+    image: grafana/grafana:11.5.1
+    container_name: dadia-grafana
+    profiles: ["dashboard"]
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafanadata:/var/lib/grafana
+    depends_on:
+      - postgres
+      - mysql
+
+  cassandra:
+    image: cassandra:5
+    container_name: dadia-cassandra
+    profiles: ["advanced"]
+    ports:
+      - "9042:9042"
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: dadia-influxdb
+    profiles: ["advanced"]
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdata:/var/lib/influxdb2
+
+volumes:
+  pgdata:
+  mysqldata:
+  mongodata:
+  influxdata:
+  grafanadata:

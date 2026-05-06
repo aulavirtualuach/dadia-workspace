@@ -1,0 +1,28 @@
+{
+    "name": "DADIA Workspace",
+    "dockerComposeFile": [
+        "../docker-compose.yml"
+    ],
+    "service": "lab",
+    "workspaceFolder": "/work",
+    "postCreateCommand": "bash scripts/postCreate.sh",
+    "forwardPorts": [
+        8888,
+        8000,
+        5432,
+        3306,
+        27017,
+        6379,
+        8086,
+        9042
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter",
+                "ms-azuretools.vscode-docker"
+            ]
+        }
+    }
+}
